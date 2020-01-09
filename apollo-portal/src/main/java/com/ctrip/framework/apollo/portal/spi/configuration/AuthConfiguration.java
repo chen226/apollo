@@ -15,7 +15,6 @@ import com.ctrip.framework.apollo.portal.spi.defaultimpl.DefaultLogoutHandler;
 import com.ctrip.framework.apollo.portal.spi.defaultimpl.DefaultSsoHeartbeatHandler;
 import com.ctrip.framework.apollo.portal.spi.defaultimpl.DefaultUserInfoHolder;
 import com.ctrip.framework.apollo.portal.spi.defaultimpl.DefaultUserService;
-import com.ctrip.framework.apollo.portal.spi.ldap.ApolloLdapAuthenticationProvider;
 import com.ctrip.framework.apollo.portal.spi.ldap.FilterLdapByGroupUserSearch;
 import com.ctrip.framework.apollo.portal.spi.ldap.LdapUserService;
 import com.ctrip.framework.apollo.portal.spi.springsecurity.SpringSecurityUserInfoHolder;
@@ -271,12 +270,13 @@ public class AuthConfiguration {
       http.csrf().disable();
       http.headers().frameOptions().sameOrigin();
       http.authorizeRequests()
-          .antMatchers("/prometheus/**","/metrics/**","/openapi/**", "/vendor/**", "/styles/**", "/scripts/**", "/views/**", "/img/**", "/i18n/**").permitAll()
+          .antMatchers("/openapi/**", "/vendor/**", "/styles/**", "/scripts/**", "/views/**", "/img/**").permitAll()
           .antMatchers("/**").hasAnyRole(USER_ROLE);
-      http.formLogin().loginPage("/signin").defaultSuccessUrl("/", true).permitAll().failureUrl("/signin?#/error").and()
-          .httpBasic();
+      http.formLogin().loginPage("/signin").permitAll().failureUrl("/signin?#/error").and().httpBasic();
+      SimpleUrlLogoutSuccessHandler urlLogoutHandler = new SimpleUrlLogoutSuccessHandler();
+      urlLogoutHandler.setDefaultTargetUrl("/signin?#/logout");
       http.logout().logoutUrl("/user/logout").invalidateHttpSession(true).clearAuthentication(true)
-          .logoutSuccessUrl("/signin?#/logout");
+          .logoutSuccessHandler(urlLogoutHandler);
       http.exceptionHandling().authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/signin"));
     }
 
@@ -392,10 +392,9 @@ public class AuthConfiguration {
           ldapContextSource, null);
       defaultAuthAutoConfiguration.setIgnorePartialResultException(true);
       defaultAuthAutoConfiguration.setSearchSubtree(true);
-      // Rewrite the logic of LdapAuthenticationProvider with ApolloLdapAuthenticationProvider,
-      // use userId in LDAP system instead of userId input by user.
-      return new ApolloLdapAuthenticationProvider(
-          bindAuthenticator, defaultAuthAutoConfiguration, ldapExtendProperties);
+      LdapAuthenticationProvider ldapAuthenticationProvider = new LdapAuthenticationProvider(
+          bindAuthenticator, defaultAuthAutoConfiguration);
+      return ldapAuthenticationProvider;
     }
 
     @Override
@@ -403,12 +402,13 @@ public class AuthConfiguration {
       http.csrf().disable();
       http.headers().frameOptions().sameOrigin();
       http.authorizeRequests()
-          .antMatchers("/prometheus/**","/metrics/**","/openapi/**", "/vendor/**", "/styles/**", "/scripts/**", "/views/**", "/img/**", "/i18n/**").permitAll()
+          .antMatchers("/openapi/**", "/vendor/**", "/styles/**", "/scripts/**", "/views/**", "/img/**").permitAll()
           .antMatchers("/**").authenticated();
-      http.formLogin().loginPage("/signin").defaultSuccessUrl("/", true).permitAll().failureUrl("/signin?#/error").and()
-              .httpBasic();
+      http.formLogin().loginPage("/signin").permitAll().failureUrl("/signin?#/error").and().httpBasic();
+      SimpleUrlLogoutSuccessHandler urlLogoutHandler = new SimpleUrlLogoutSuccessHandler();
+      urlLogoutHandler.setDefaultTargetUrl("/signin?#/logout");
       http.logout().logoutUrl("/user/logout").invalidateHttpSession(true).clearAuthentication(true)
-              .logoutSuccessUrl("/signin?#/logout");
+          .logoutSuccessHandler(urlLogoutHandler);
       http.exceptionHandling().authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/signin"));
     }
 

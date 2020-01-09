@@ -17,13 +17,17 @@ public class AdminServiceHealthIndicator implements HealthIndicator {
 
   @Override
   public Health health() {
-    check();
+    int errorCode = check();
+    if (errorCode != 0) {
+      return Health.down().withDetail("Error Code", errorCode).build();
+    }
     return Health.up().build();
   }
 
-  private void check() {
+  private int check() {
     PageRequest pageable = PageRequest.of(0, 1);
     appService.findAll(pageable);
+    return 0;
   }
 
 }

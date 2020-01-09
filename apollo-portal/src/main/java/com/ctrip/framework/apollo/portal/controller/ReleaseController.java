@@ -3,6 +3,7 @@ package com.ctrip.framework.apollo.portal.controller;
 import com.ctrip.framework.apollo.common.dto.ReleaseDTO;
 import com.ctrip.framework.apollo.common.exception.BadRequestException;
 import com.ctrip.framework.apollo.common.exception.NotFoundException;
+import com.ctrip.framework.apollo.common.utils.RequestPrecondition;
 import com.ctrip.framework.apollo.core.enums.Env;
 import com.ctrip.framework.apollo.portal.component.PermissionValidator;
 import com.ctrip.framework.apollo.portal.component.config.PortalConfig;
@@ -11,7 +12,6 @@ import com.ctrip.framework.apollo.portal.entity.model.NamespaceReleaseModel;
 import com.ctrip.framework.apollo.portal.entity.vo.ReleaseCompareResult;
 import com.ctrip.framework.apollo.portal.listener.ConfigPublishEvent;
 import com.ctrip.framework.apollo.portal.service.ReleaseService;
-import com.ctrip.framework.apollo.portal.spi.UserInfoHolder;
 import javax.validation.Valid;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
@@ -29,6 +29,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+
+import static com.ctrip.framework.apollo.common.utils.RequestPrecondition.checkModel;
 
 @Validated
 @RestController
@@ -38,19 +41,16 @@ public class ReleaseController {
   private final ApplicationEventPublisher publisher;
   private final PortalConfig portalConfig;
   private final PermissionValidator permissionValidator;
-  private final UserInfoHolder userInfoHolder;
 
   public ReleaseController(
       final ReleaseService releaseService,
       final ApplicationEventPublisher publisher,
       final PortalConfig portalConfig,
-      final PermissionValidator permissionValidator,
-      final UserInfoHolder userInfoHolder) {
+      final PermissionValidator permissionValidator) {
     this.releaseService = releaseService;
     this.publisher = publisher;
     this.portalConfig = portalConfig;
     this.permissionValidator = permissionValidator;
-    this.userInfoHolder = userInfoHolder;
   }
 
   @PreAuthorize(value = "@permissionValidator.hasReleaseNamespacePermission(#appId, #namespaceName, #env)")
@@ -164,7 +164,7 @@ public class ReleaseController {
       throw new AccessDeniedException("Access is denied");
     }
 
-    releaseService.rollback(Env.valueOf(env), releaseId, userInfoHolder.getUser().getUserId());
+    releaseService.rollback(Env.valueOf(env), releaseId);
 
     ConfigPublishEvent event = ConfigPublishEvent.instance();
     event.withAppId(release.getAppId())
