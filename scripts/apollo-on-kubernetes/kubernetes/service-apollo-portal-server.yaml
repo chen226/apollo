@@ -93,18 +93,8 @@ spec:
       labels:
         app: pod-apollo-portal-server
     spec:
-      affinity:
-        podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                - key: app
-                  operator: In
-                  values:
-                  - pod-apollo-portal-server
-              topologyKey: kubernetes.io/hostname
+      nodeSelector:
+        node: "apollo"
       
       volumes:
         - name: volume-configmap-apollo-portal-server

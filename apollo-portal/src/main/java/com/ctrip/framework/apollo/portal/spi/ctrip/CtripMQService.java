@@ -103,7 +103,7 @@ public class CtripMQService implements MQService {
 
   }
 
-  private static class PublishMsg {
+  private class PublishMsg {
 
     private String assginee;
     private String desc;

@@ -54,7 +54,7 @@ public class AdminService {
 
     logger.info("{} is deleting App:{}", operator, appId);
 
-    List<Cluster> managedClusters = clusterService.findParentClusters(appId);
+    List<Cluster> managedClusters = clusterService.findClusters(appId);
 
     // 1. delete clusters
     if (Objects.nonNull(managedClusters)) {
